@@ -13,7 +13,10 @@ const data = await res.json();
 
 const lines = existsSync(FILE) ? readFileSync(FILE, "utf8").trim().split("\n").filter(Boolean) : [];
 const records = lines.map((l) => JSON.parse(l));
-const seen = new Set(records.map((r) => `${r.stage}:${r.seedHash}`));
+const dedupeKey = (r) => r.stage === "config"
+  ? `config:${r.boxId}:${r.oddsDigest}:${r.poolDigest}`
+  : `${r.stage}:${r.seedHash}`;
+const seen = new Set(records.map(dedupeKey));
 let prev = records.length ? records[records.length - 1].recordHash : "";
 
 const candidates = [];
@@ -38,9 +41,32 @@ for (const seed of data.revealedSeeds || []) {
   }
 }
 
+// 신뢰도 ③⑤: 팩별 확률·풀 봉인, 공개 시드의 순번 장부 지문도 외부 고정
+for (const commit of data.configCommits || []) {
+  candidates.push({
+    stage: "config", boxId: commit.boxId, boxName: commit.boxName,
+    oddsDigest: commit.oddsDigest, poolDigest: commit.poolDigest,
+    poolCount: commit.poolCount ?? null, committedAt: commit.committedAt || null,
+  });
+}
+const ledgerBase = API.replace(/\/api\/fairness$/, "/api/fairness/nonce-ledger");
+const loggedLedgers = new Set(records.filter((r) => r.stage === "nonceLedger").map((r) => r.seedHash));
+for (const seed of data.revealedSeeds || []) {
+  if (!seed?.seedHash || loggedLedgers.has(seed.seedHash)) continue;
+  try {
+    const ledgerRes = await fetch(`${ledgerBase}?seedHash=${seed.seedHash}`);
+    if (!ledgerRes.ok) continue;
+    const ledger = await ledgerRes.json();
+    candidates.push({
+      stage: "nonceLedger", seedHash: seed.seedHash, totalPulls: ledger.totalPulls,
+      nonceRange: ledger.nonceRange, gapCount: ledger.gapCount, ledgerDigest: ledger.ledgerDigest,
+    });
+  } catch { /* 다음 주기에 재시도 */ }
+}
+
 let added = 0;
 for (const candidate of candidates) {
-  const key = `${candidate.stage}:${candidate.seedHash}`;
+  const key = dedupeKey(candidate);
   if (seen.has(key)) continue;
   seen.add(key);
   const record = { recordedAt: new Date().toISOString(), ...candidate, prevRecordHash: prev };

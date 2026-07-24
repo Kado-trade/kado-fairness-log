@@ -1,0 +1,24 @@
+name: sync-fairness-log
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/sync.mjs
+      - run: node scripts/verify-chain.mjs
+      - name: commit
+        run: |
+          git config user.name "kado-fairness-bot"
+          git config user.email "noreply@kado.trade"
+          git add log/seeds.jsonl
+          git diff --cached --quiet || git commit -m "log: seed records $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push

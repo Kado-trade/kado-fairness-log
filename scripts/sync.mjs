@@ -13,8 +13,10 @@ const data = await res.json();
 
 const lines = existsSync(FILE) ? readFileSync(FILE, "utf8").trim().split("\n").filter(Boolean) : [];
 const records = lines.map((l) => JSON.parse(l));
+// config 키 v2: packType 포함 — 기존(packType 없는) 10건도 packType 이 담긴 새 기록으로
+// 한 번 더 고정된다(검수 7라운드 P1: 현재 구성의 팩 종류 외부 고정).
 const dedupeKey = (r) => r.stage === "config"
-  ? `config:${r.boxId}:${r.oddsDigest}:${r.poolDigest}`
+  ? `config2:${r.boxId}:${r.oddsDigest}:${r.poolDigest}:${r.packType ?? ""}`
   : `${r.stage}:${r.seedHash}`;
 const seen = new Set(records.map(dedupeKey));
 let prev = records.length ? records[records.length - 1].recordHash : "";

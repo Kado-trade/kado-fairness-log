@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
-const API = process.env.KADO_FAIRNESS_API || "https://kado-git-dev-pchrrr.vercel.app/api/fairness";
+const API = process.env.KADO_FAIRNESS_API || "https://kado.trade/api/fairness";
 const FILE = new URL("../log/seeds.jsonl", import.meta.url);
 const sha256 = (s) => createHash("sha256").update(s).digest("hex");
 

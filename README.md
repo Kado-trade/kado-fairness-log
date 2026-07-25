@@ -21,6 +21,8 @@ KADO 데이터베이스만 보고는 "결과가 나온 뒤 과거 시각으로 �
   `recordHash = sha256(prevRecordHash + JSON(record))`
 - 동기화: GitHub Actions 가 30분마다 KADO 공개 API(`/api/fairness`)를 읽어 새 기록만 추가합니다.
   워크플로 실행 이력·커밋 시각은 GitHub 이 기록하며 KADO 가 수정할 수 없습니다.
+- 데이터 출처: **2026-07-26 이전 기록은 사전 공개(프리뷰) 환경**의 시드이며, 2026-07-26부터는
+  운영(kado.trade) 데이터를 기록합니다. 해시 체인은 끊김 없이 이어집니다.
 
 ## 기록 종류 (stage)
 | stage | 내용 |

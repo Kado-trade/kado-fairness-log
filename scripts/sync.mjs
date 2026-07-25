@@ -45,6 +45,7 @@ for (const seed of data.revealedSeeds || []) {
 for (const commit of data.configCommits || []) {
   candidates.push({
     stage: "config", boxId: commit.boxId, boxName: commit.boxName,
+    packType: commit.packType ?? null,
     oddsDigest: commit.oddsDigest, poolDigest: commit.poolDigest,
     poolCount: commit.poolCount ?? null, committedAt: commit.committedAt || null,
   });
